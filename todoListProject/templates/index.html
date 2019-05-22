@@ -1,0 +1,111 @@
+<html>
+<head>
+<style>
+ul
+{
+list-style-type:none;
+}
+</style>
+</head>
+<body>
+<h1>Todo list in Django(ajax) </h1>
+
+<form method="post" id="form_id" action="/post/">
+ {% csrf_token %}
+{{form.as_p}}
+
+<input type="submit" value="submit"/>
+</form>
+
+<ul class="todo-div">
+{% for i in todo %}
+<form method="POST" action="/delete/{{i.id}}/" id="{{i.id}}">
+{% csrf_token %}
+<li>{{i.title}}
+<br/>
+Created at {{i.added}}
+<br/>Last updated {{i.updated}}</li>
+<input type ="submit" value="delete" class="deletebutton" onclick=delete_form({{i.id}})>
+<br/><br/>
+</form>
+{% endfor %}
+</ul>
+<script src="https://code.jquery.com/jquery-1.11.3.min.js"></script>
+<script>
+  $("#form_id").submit(function(e)
+  {
+
+	  e.preventDefault();
+	  $.ajax({
+             data:$(this).serialize(),
+         	 type:$(this).attr('method'),
+             url:$(this).attr('action'),
+			 dataType:'json',
+             success:function(json)
+              {
+			  alert("List added Successfully");
+			  var jsonData=$.parseJSON(json);
+			  var content="";
+			  console.log(jsonData)
+				for(i=0;i<jsonData.length;i++)
+				{
+				  var id=jsonData[i].pk;
+				  var title = jsonData[i].fields.title;
+				  var added = jsonData[i].fields.added;
+				  var updated = jsonData[i].fields.updated;
+				  content +="<form method='POST' action='/delete/" +id + "/' id="+id+">{% csrf_token %}<li><br/>"+title+"<br/>Created at"+ added  +"<br/>Last updated"+updated +"</li><input type ='submit' onclick=delete_form("+id+") class='deletebutton' value='delete'></form>";
+				}
+
+				 $(".todo-div").empty().append(content);
+			  },
+            error:function(e,x,r)
+			 {
+			  console.log(e);
+			 },
+	    });
+  } );
+</script>
+<script>
+  function delete_form(id){
+  var id=id;
+  var ele = document.getElementById(id)
+  //var form = $(ele).serialize()
+  //alert(form);
+$(ele).submit(function(e)
+  {
+
+	 event.preventDefault();
+
+	  $.ajax({
+             data:$(ele).serialize(),
+         	 type:$(ele).attr('method'),
+             url:$(ele).attr('action'),
+			 dataType:'json',
+             success:function(json)
+              {
+			  alert("List removed Successfully");
+			  $(".todo-div").empty();
+			  var jsonData=$.parseJSON(json);
+			  var content="";
+				for(i=0;i<jsonData.length;i++)
+				{
+				  var id=jsonData[i].pk;
+				  var title = jsonData[i].fields.title;
+				  var added = jsonData[i].fields.added;
+				  var updated = jsonData[i].fields.updated;
+				  content +="<form method='POST' action='/delete/" +id + "/' id="+id+">{% csrf_token %}<li><br/>"+title+"<br/>Created at"+ added  +"<br/>Last updated"+updated +"</li><input type ='submit' onclick=delete_form("+id+") class='deletebutton' value='delete'></form>";
+				}
+
+				 $(".todo-div").append(content);
+			  },
+            error:function(e,x,r)
+			 {
+			  console.log(e);
+			 },
+	    });
+  });
+  }
+</script>
+
+</body>
+</html>
